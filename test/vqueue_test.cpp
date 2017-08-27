@@ -2,20 +2,21 @@
 #include <iostream>
 #include <memory>
 #include <thread>
-#include <chrono>
 #include <gtest/gtest.h>
-
-typedef std::chrono::steady_clock Clock;
 
 extern "C" {
   #include "vqueue.h"
 }
 
-/*Struct for items pushed to the queue with high resolution timestamp*/
 typedef struct {
   int data;
-  Clock::time_point timestamp;
+  int thread_id;
 } QItem;
+
+typedef struct {
+  int id;
+  vqueue_t * queue;
+} WorkerSpec;
 
 
 class vqueueTest : public ::testing::Test {
@@ -41,24 +42,26 @@ class vqueueTest : public ::testing::Test {
   }
 
   /*Task for producer threads*/
-  static void push_data(vqueue_t * queue) {
+  static void push_data(WorkerSpec * spec) {
+    vqueue_t * queue = spec->queue;
+    int tid = spec->id;
     QItem * cur_item;
     for (int i = 0; i < threaded_push_count; ++i) {
       cur_item = (QItem *) malloc(sizeof(QItem *));
       cur_item->data = i;
-      cur_item->timestamp = Clock::now();
+      cur_item->thread_id = tid;
       vqueue_push(*queue, ((void *) cur_item));
     }
+    free(spec);
   }
 
   /*Task for consumer threads*/
-  static void read_data(vqueue_t * queue) {
+  static void read_data(WorkerSpec * spec) {
+    vqueue_t * queue = spec->queue;
     void * retrieved;
     QItem * cur_item;
     int consumed_count = 0;
-    auto prev_timestamp = Clock::time_point(std::chrono::nanoseconds::min());
-    int prev_data = -1;
-    int error_count = 0;
+    std::vector<int> prev_data(producer_thread_count, -1);
     while (
         consumed_count <
         threaded_push_count * producer_thread_count / consumer_thread_count
@@ -66,14 +69,12 @@ class vqueueTest : public ::testing::Test {
       if (vqueue_pop(*queue, &retrieved)) {
         ++consumed_count;
         cur_item = (QItem *) retrieved;
-        if (cur_item->timestamp < prev_timestamp) {
-          ++error_count;
-        }
-        prev_timestamp = cur_item->timestamp;
-        prev_data = cur_item->data;
+        // Basic check of ordered insertion and retrieval
+        EXPECT_LT(prev_data[cur_item->thread_id], cur_item->data);
+        prev_data[cur_item->thread_id] = cur_item->data;
       }
     }
-    EXPECT_GT(consumed_count / 100, error_count);
+    free(spec);
   }
 };
 
@@ -87,16 +88,24 @@ TEST_F(vqueueTest, PushPop) {
   }
 }
 
+/* The most important aspect of this test is not the (relatively
+ * straightforward) check of insertion/retrieval error but whether or not it
+ * hangs.
+ */
 TEST_F(vqueueTest, ThreadedPushPop) {
+  WorkerSpec * cur_spec;
   for (int i = 0; i < producer_thread_count; ++i) {
-    producers.push_back(std::make_shared<std::thread>(push_data, &queue));
+    cur_spec = (WorkerSpec *) malloc(sizeof(WorkerSpec));
+    cur_spec->id = i;
+    cur_spec->queue = &queue;
+    producers.push_back(std::make_shared<std::thread>(push_data, cur_spec));
   }
-  std::cout << "Producers created\n";
   for (int i = 0; i < consumer_thread_count; ++i) {
-    consumers.push_back(std::make_shared<std::thread>(read_data, &queue));
+    cur_spec = (WorkerSpec *) malloc(sizeof(WorkerSpec));
+    cur_spec->id = i + producer_thread_count;
+    cur_spec->queue = &queue;
+    consumers.push_back(std::make_shared<std::thread>(read_data, cur_spec));
   }
-  /*read_data(&queue);*/
-  std::cout << "Consumers created\n";
   for (auto cur_thread : producers) {
     cur_thread->detach();
   }
