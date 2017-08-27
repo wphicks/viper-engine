@@ -22,6 +22,14 @@
 
 #include "thread/vatomic.h"
 
+#ifdef __clang__
+#define atomic_exchange(store, value) __sync_swap(store, value)
+#else
+#define atomic_exchange(store, value) \
+  __atomic_exchange_n(store, value, __ATOMIC_SEQ_CST)
+#endif
+
+
 int32_t vatomic32_compare_exchange(int32_t* store, int32_t comp, int32_t value)
 {
 	return __sync_val_compare_and_swap((volatile int32_t*)store, comp, value);
@@ -29,7 +37,7 @@ int32_t vatomic32_compare_exchange(int32_t* store, int32_t comp, int32_t value)
 
 int32_t vatomic32_exchange(int32_t* store, int32_t value)
 {
-	return __sync_swap((volatile int32_t*)store, value);
+	return atomic_exchange((volatile int32_t*)store, value);
 }
 
 int32_t vatomic32_exchange_add(int32_t* store, int32_t value)
@@ -54,7 +62,7 @@ int64_t vatomic64_compare_exchange(int64_t* store, int64_t comp, int64_t value)
 
 int64_t vatomic64_exchange(int64_t* store, int64_t value)
 {
-	return __sync_swap((volatile int64_t*)store, value);
+	return atomic_exchange((volatile int64_t*)store, value);
 }
 
 int64_t vatomic64_exchange_add(int64_t* store, int64_t value)
