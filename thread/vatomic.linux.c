@@ -24,58 +24,55 @@
 
 int32_t vatomic32_compare_exchange(int32_t* store, int32_t comp, int32_t value)
 {
-	return __sync_val_compare_and_swap((volatile long*)store, comp, value);
+	return __sync_val_compare_and_swap((volatile int32_t*)store, comp, value);
 }
 
 int32_t vatomic32_exchange(int32_t* store, int32_t value)
 {
-	return __sync_swap((volatile long*)store, value);
+	return __sync_swap((volatile int32_t*)store, value);
 }
 
 int32_t vatomic32_exchange_add(int32_t* store, int32_t value)
 {
-	return __sync_fetch_and_add((volatile long*)store, value);
+	return __sync_fetch_and_add((volatile int32_t*)store, value);
 }
 
 int32_t vatomic32_increment(int32_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, 1);
+	return __sync_fetch_and_add((volatile int32_t*)store, 1);
 }
 
 int32_t vatomic32_decrement(int32_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, -1);
+	return __sync_fetch_and_add((volatile int32_t*)store, -1);
 }
 
 int64_t vatomic64_compare_exchange(int64_t* store, int64_t comp, int64_t value)
 {
-	return __sync_val_compare_and_swap((volatile long*)store, comp, value);
+	return __sync_val_compare_and_swap((volatile int64_t*)store, comp, value);
 }
 
 int64_t vatomic64_exchange(int64_t* store, int64_t value)
 {
-	return __sync_swap((volatile long*)store, value);
+	return __sync_swap((volatile int64_t*)store, value);
 }
 
 int64_t vatomic64_exchange_add(int64_t* store, int64_t value)
 {
-	return __sync_fetch_and_add((volatile long*)store, value);
+	return __sync_fetch_and_add((volatile int64_t*)store, value);
 }
 
 int64_t vatomic64_increment(int64_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, 1);
+	return __sync_fetch_and_add((volatile int64_t*)store, 1);
 }
 
 int64_t vatomic64_decrement(int64_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, -1);
+	return __sync_fetch_and_add((volatile int64_t*)store, -1);
 }
 
 void vatomic_barrier()
 {
-    /* __sync_synchronize? */
     __sync_synchronize();
-	/*int32_t unused = 0;
-	vatomic32_exchange(&unused, 1);*/
 }
