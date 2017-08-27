@@ -19,7 +19,7 @@ void push_data(void * queue) {
   for (int i = 0; i < PUSHCOUNT; ++i) {
     cur_item = malloc(sizeof(QItem));
     cur_item->data = i;
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, NULL); // TODO: Incompatible with Windows
     cur_item->timestamp = tv.tv_sec * 1000000 + tv.tv_usec;
     vqueue_push(*((vqueue_t *) queue), ((void *) cur_item));
   }
