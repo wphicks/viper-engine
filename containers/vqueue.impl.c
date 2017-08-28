@@ -61,7 +61,7 @@ static vqueue_node_t* _init_node(vqueue_impl_t* queue, uint32_t node_index);
 
 size_t vqueue_get_bytes_required(int node_count)
 {
-	return sizeof(vqueue_impl_t) + (sizeof(vqueue_node_t) * node_count);
+	return sizeof(vqueue_impl_t) + (sizeof(vqueue_node_t) * (node_count + 1));
 }
 
 vqueue_t vqueue_create(void* buffer, int node_count)
@@ -73,13 +73,13 @@ vqueue_t vqueue_create(void* buffer, int node_count)
 	queue->nodes = (vqueue_node_t*)(queue + 1);
 
 	/* Link nodes together. */
-	for (int i = 0; i < node_count - 1; ++i)
+	for (int i = 0; i < node_count; ++i)
 	{
 		queue->nodes[i].next.part.index = i + 1;
 		queue->nodes[i].next.part.count = 0;
 	}
-	queue->nodes[node_count - 1].next.part.index = k_vqueue_invalid_index;
-	queue->nodes[node_count - 1].next.part.count = 0;
+	queue->nodes[node_count].next.part.index = k_vqueue_invalid_index;
+	queue->nodes[node_count].next.part.count = 0;
 
 	/* Populate the queue with a dummy node. */
 	uint32_t dummy_index = _alloc_node_index(queue);

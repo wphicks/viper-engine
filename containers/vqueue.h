@@ -32,7 +32,7 @@ typedef void* vqueue_t;
 
 /*
 ** Gets the amount of memory required by queue of the specified size.
-** @param node_count Maximum of nodes in the queue.
+** @param node_count Maximum of nodes in the queue (excluding dummy node).
 ** @return The amount of memory required.
 ** @see vqueue_create
 */
@@ -41,7 +41,7 @@ size_t vqueue_get_bytes_required(int node_count);
 /*
 ** Create a lock free queue.
 ** @param buffer A buffer of size vqueue_get_bytes_required().
-** @param node_count Maximum of nodes in the queue.
+** @param node_count Maximum of nodes in the queue (excluding dummy node).
 ** @return A new lock free queue.
 ** @see vqueue_get_bytes_required
 */
