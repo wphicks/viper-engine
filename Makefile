@@ -1,5 +1,5 @@
 # Global options
-BASEBUILDDIR=build
+BASEBUILDDIR:=build
 TESTDIR=test
 
 CC=clang
@@ -14,6 +14,11 @@ CXXFLAGS=-Wall -std=c++14
 PROFFLAGS=-p
 DEBUGFLAGS=-DDEBUG
 
+GCC ?= 0
+ifeq ($(GCC), 1)
+    CC=gcc
+    BASEBUILDDIR:=build/gcc
+endif
 
 OPT ?= 0
 CFLAGS+=-O$(OPT)
@@ -32,6 +37,7 @@ ifeq ($(PROFILE), 1)
 endif
 
 
+# Targets
 TARGETS=$(TESTS)
 TESTS=$(BUILDDIR)/vqueue_test $(BUILDDIR)/main_test
 
