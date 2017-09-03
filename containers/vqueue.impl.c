@@ -199,6 +199,7 @@ static uint32_t _alloc_node_index(vqueue_impl_t* queue)
 
 	for (;;)
 	{
+        vatomic_barrier();
 		vqueue_pointer_t free_list = queue->free_list;
 
 		if (free_list.part.index != k_vqueue_invalid_index)
