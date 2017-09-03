@@ -24,58 +24,65 @@
 
 int32_t vatomic32_compare_exchange(int32_t* store, int32_t comp, int32_t value)
 {
-	return __sync_val_compare_and_swap((volatile long*)store, comp, value);
+  int32_t initial_value = comp;
+  __atomic_compare_exchange_n(
+    (volatile int32_t*)store, &initial_value, value,
+    0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST
+  );
+  return initial_value;
 }
 
 int32_t vatomic32_exchange(int32_t* store, int32_t value)
 {
-	return __sync_swap((volatile long*)store, value);
+    return __atomic_exchange_n((volatile int32_t*)store, value, __ATOMIC_SEQ_CST);
 }
 
 int32_t vatomic32_exchange_add(int32_t* store, int32_t value)
 {
-	return __sync_fetch_and_add((volatile long*)store, value);
+	return __atomic_fetch_add((volatile int32_t*)store, value, __ATOMIC_SEQ_CST);
 }
 
 int32_t vatomic32_increment(int32_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, 1);
+	return __atomic_fetch_add((volatile int32_t*)store, 1, __ATOMIC_SEQ_CST);
 }
 
 int32_t vatomic32_decrement(int32_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, -1);
+	return __atomic_fetch_add((volatile int32_t*)store, -1, __ATOMIC_SEQ_CST);
 }
 
 int64_t vatomic64_compare_exchange(int64_t* store, int64_t comp, int64_t value)
 {
-	return __sync_val_compare_and_swap((volatile long*)store, comp, value);
+  int64_t initial_value = comp;
+  __atomic_compare_exchange_n(
+    (volatile int64_t*)store, &initial_value, value,
+    0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST
+  );
+  return initial_value;
 }
 
 int64_t vatomic64_exchange(int64_t* store, int64_t value)
 {
-	return __sync_swap((volatile long*)store, value);
+    return __atomic_exchange_n((volatile int64_t*)store, value, __ATOMIC_SEQ_CST);
 }
 
 int64_t vatomic64_exchange_add(int64_t* store, int64_t value)
 {
-	return __sync_fetch_and_add((volatile long*)store, value);
+	return __atomic_fetch_add((volatile int64_t*)store, value, __ATOMIC_SEQ_CST);
 }
 
 int64_t vatomic64_increment(int64_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, 1);
+	return __atomic_fetch_add((volatile int64_t*)store, 1, __ATOMIC_SEQ_CST);
 }
 
 int64_t vatomic64_decrement(int64_t* store)
 {
-	return __sync_fetch_and_add((volatile long*)store, -1);
+	return __atomic_fetch_add((volatile int64_t*)store, -1, __ATOMIC_SEQ_CST);
 }
 
 void vatomic_barrier()
 {
-    /* __sync_synchronize? */
-    __sync_synchronize();
-	/*int32_t unused = 0;
-	vatomic32_exchange(&unused, 1);*/
+    __atomic_thread_fence(__ATOMIC_SEQ_CST);
 }
