@@ -17,6 +17,7 @@ DEBUGFLAGS=-DDEBUG
 GCC ?= 0
 ifeq ($(GCC), 1)
     CC=gcc
+    CXX=g++
     BASEBUILDDIR:=build/gcc
 endif
 
