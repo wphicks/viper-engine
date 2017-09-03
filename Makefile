@@ -1,21 +1,43 @@
-BUILDDIR=build
+# Global options
+BASEBUILDDIR=build
 TESTDIR=test
 
 CC=clang
-CFLAGS=-g -Wall -std=c99 -O0 -pthread
-PROFFLAGS=-pg -Wall -std=c99
+CFLAGS=-Wall -std=c99 -pthread -g
 INCFLAGS=-I. -Icontainers -Ithread
 LDTESTFLAGS=-lgtest -lgtest_main -lpthread -lrt
 
 CXX=clang++
-CXXFLAGS=-g -Wall -std=c++14
+CXXFLAGS=-Wall -std=c++14
 
-TARGETS=test
+# Configurable options
+PROFFLAGS=-p
+DEBUGFLAGS=-DDEBUG
+
+
+OPT ?= 0
+CFLAGS+=-O$(OPT)
+BUILDDIR:=$(BASEBUILDDIR)/opt$(OPT)
+
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+    CFLAGS+=$(DEBUGFLAGS)
+    BUILDDIR:=$(BASEBUILDDIR)/debug
+endif
+
+PROFILE ?= 0
+ifeq ($(PROFILE), 1)
+    CFLAGS+=$(PROFFLAGS)
+    BUILDDIR:=$(BASEBUILDDIR)/profile
+endif
+
+
+TARGETS=$(TESTS)
 TESTS=$(BUILDDIR)/vqueue_test $(BUILDDIR)/main_test
 
-all : $(TARGETS)
+.PHONY: all test memtest clean objdump
 
-all_test: test memtest
+all : $(TARGETS)
 
 test: $(TESTS)
 	for test_file in $(TESTS) ; do\
@@ -27,17 +49,22 @@ memtest: $(TESTS)
 	    valgrind --tool=memcheck $$test_file  || exit 1; \
 	done
 
+objdump: $(TARGETS)
+	for obj_file in $(BUILDDIR)/*.o; do\
+	    objdump -S $${obj_file} > $(BUILDDIR)/asm/$$(basename $$obj_file).asm; \
+	done
+
 $(BUILDDIR)/main_test: $(BUILDDIR)/vqueue.o $(TESTDIR)/main.c
-	$(CC) $(CFLAGS) $(INCFLAGS) $(BUILDDIR)/vatomic.o $(BUILDDIR)/vqueue.o $(TESTDIR)/main.c $(LDTESTFLAGS) -o $(BUILDDIR)/main_test
+	$(CC) $(CFLAGS) $(INCFLAGS) $(BUILDDIR)/vatomic.o $(BUILDDIR)/vqueue.o $(TESTDIR)/main.c $(LDTESTFLAGS) -o $@
 
 $(BUILDDIR)/vqueue_test: $(BUILDDIR)/vqueue.o $(TESTDIR)/vqueue_test.cpp
-	$(CXX) $(CXXFLAGS) $(INCFLAGS) $(BUILDDIR)/vatomic.o $(BUILDDIR)/vqueue.o $(TESTDIR)/vqueue_test.cpp $(LDTESTFLAGS) -o $(BUILDDIR)/vqueue_test
+	$(CXX) $(CXXFLAGS) $(INCFLAGS) $(BUILDDIR)/vatomic.o $(BUILDDIR)/vqueue.o $(TESTDIR)/vqueue_test.cpp $(LDTESTFLAGS) -o $@
 
 $(BUILDDIR)/vqueue.o: containers/vqueue.h containers/vqueue.impl.c $(BUILDDIR)/vatomic.o
-	$(CC) $(CFLAGS) $(INCFLAGS) $(BUILDDIR)/vatomic.o -c containers/vqueue.impl.c -o $(BUILDDIR)/vqueue.o
+	$(CC) $(CFLAGS) $(INCFLAGS) $(BUILDDIR)/vatomic.o -c containers/vqueue.impl.c -o $@
 
 $(BUILDDIR)/vatomic.o: thread/vatomic.h thread/vatomic.linux.c
-	$(CC) $(CFLAGS) $(INCFLAGS) -c thread/vatomic.linux.c -o $(BUILDDIR)/vatomic.o
+	$(CC) $(CFLAGS) $(INCFLAGS) -c thread/vatomic.linux.c -o $@
 
 clean:
 	rm $(BUILDDIR)/*
