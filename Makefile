@@ -42,7 +42,7 @@ endif
 TARGETS=$(TESTS)
 TESTS=$(BUILDDIR)/vqueue_test $(BUILDDIR)/main_test
 
-.PHONY: all test memtest clean objdump
+.PHONY: all test memtest clean objdump init
 
 all : $(TARGETS)
 
@@ -59,6 +59,12 @@ memtest: $(TESTS)
 objdump: $(TARGETS)
 	for obj_file in $(BUILDDIR)/*.o; do\
 	    objdump -S $${obj_file} > $(BUILDDIR)/asm/$$(basename $$obj_file).asm; \
+	done
+
+init:
+	for entry in debug opt0 opt1 opt2 opt3 profile; do\
+	    mkdir -p $(BASEBUILDDIR)/$${entry}/asm; \
+	    mkdir -p $(BASEBUILDDIR)/gcc/$${entry}/asm; \
 	done
 
 $(BUILDDIR)/main_test: $(BUILDDIR)/vqueue.o $(TESTDIR)/main.c
